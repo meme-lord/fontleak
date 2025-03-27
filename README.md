@@ -15,7 +15,7 @@ Fast exfiltration of text using CSS and Ligatures. For a detailed technical expl
 
 ## Getting Started
 
-### Using Docker
+#### Using Docker
 
 You can quickly get started with fontleak using Docker:
 
@@ -33,7 +33,7 @@ Set the `BASE_URL` environment variable to the public URL where the site will be
 
 The fontleak URL accepts several parameters to customize its behavior:
 
-### Parameters
+#### Parameters
 - `selector`: CSS selector that matches exactly one element in the target page. default: env `SELECTOR` / `script:first-of-type`
 - `attr`: Attribute to exfiltrate. default: env `ATTR` / `textContent`
 - `parent`: Parent element of the target element (default: `body`, options: `body` or `head`). default: env `PARENT` / `body`
