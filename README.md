@@ -36,10 +36,10 @@ The fontleak URL accepts several parameters to customize its behavior:
 #### Parameters
 - `selector`: CSS selector that matches exactly one element in the target page. default: env `SELECTOR` / `script:first-of-type`
 - `attr`: Attribute to exfiltrate. default: env `ATTR` / `textContent`
-- `parent`: Parent element of the target element (default: `body`, options: `body` or `head`). default: env `PARENT` / `body`
+- `parent`: Parent element of the target element (options: `body` or `head`). default: env `PARENT` / `body`
 - `alphabet`: Characters to include in the font (default: env `ALPHABET` / `contents of string.printable`).
 
-### Example Usage
+#### Example Usage
 
 Basic usage:
 ```html
