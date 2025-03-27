@@ -1,4 +1,4 @@
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/adrgs/fontleak)](https://github.com/adrgs/fontleak/releases)
 [![GitHub stars](https://img.shields.io/github/stars/adrgs/fontleak)](https://github.com/adrgs/fontleak/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/adrgs/fontleak)](https://github.com/adrgs/fontleak/network/members)
