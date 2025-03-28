@@ -1,0 +1,26 @@
+# Use the existing Dockerfile as base
+FROM app
+
+# Install Chrome and ChromeDriver
+RUN apt-get update && \
+    apt-get install -y wget gnupg && \
+    wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
+    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list && \
+    apt-get update && \
+    apt-get install -y google-chrome-stable && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Python test dependencies and docker CLI
+RUN pip install selenium pytest && \
+    apt-get update && \
+    apt-get install -y docker.io && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy test files
+COPY tests/ /app/tests/
+
+# Set up Chrome options
+ENV CHROME_OPTIONS="--headless --no-sandbox --disable-gpu --disable-dev-shm-usage --remote-debugging-port=9222"
+
+# Run both server and tests
+CMD ["uv", "run", "pytest", "tests/test_chrome.py", "-v"]
