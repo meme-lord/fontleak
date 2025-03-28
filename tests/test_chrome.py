@@ -3,6 +3,8 @@ import subprocess
 import tempfile
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 import os
 import uuid
 
@@ -39,12 +41,13 @@ def test_secret_leak():
         for option in os.environ["CHROME_OPTIONS"].split():
             chrome_options.add_argument(option)
         chrome_options.add_argument(f"--user-data-dir={temp_dir}")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--no-sandbox")
         
         # Add more debug info
         print(f"Launching Chrome with options: {chrome_options.arguments}")
-        driver = webdriver.Chrome(options=chrome_options)
+        
+        # Use webdriver manager to handle chromedriver
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=chrome_options)
 
         # Visit the page
         driver.get("http://localhost:4242/test")
@@ -62,8 +65,12 @@ def test_secret_leak():
             driver.quit()
         if temp_dir:
             try:
-                os.rmdir(temp_dir)
-            except OSError:
+                import shutil
+                shutil.rmtree(temp_dir, ignore_errors=True)
+            except:
                 pass
         server_process.terminate()
-        server_process.wait()
+        try:
+            server_process.wait(timeout=5)
+        except:
+            server_process.kill()
