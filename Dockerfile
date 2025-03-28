@@ -1,6 +1,17 @@
 # Use a Python image with uv pre-installed
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
+# Install Node.js and npm
+RUN apt-get update && \
+    apt-get install -y curl gnupg && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    # Clean up
+    rm -rf /var/lib/apt/lists/*
+
+# Install svg2ttf globally
+RUN npm install -g svg2ttf
+
 # Install the project into `/app`
 WORKDIR /app
 
