@@ -2,6 +2,7 @@ import logging
 import sys
 from logging import Formatter
 
+
 # Add color support
 class ColorFormatter(Formatter):
     grey = "\x1b[38;20m"
@@ -16,13 +17,14 @@ class ColorFormatter(Formatter):
         logging.INFO: grey + format + reset,
         logging.WARNING: yellow + format + reset,
         logging.ERROR: red + format + reset,
-        logging.CRITICAL: bold_red + format + reset
+        logging.CRITICAL: bold_red + format + reset,
     }
 
     def format(self, record):
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt, datefmt="%Y-%m-%d %H:%M:%S")
         return formatter.format(record)
+
 
 # Configure logger
 logger = logging.getLogger("fontleak")
@@ -36,7 +38,9 @@ console_handler.setLevel(logging.INFO)
 if sys.stdout.isatty():
     console_handler.setFormatter(ColorFormatter())
 else:
-    console_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+    console_handler.setFormatter(
+        logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    )
 
 # Add handler
 logger.addHandler(console_handler)

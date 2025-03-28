@@ -85,7 +85,7 @@ src: url('{{ font_path }}') format('opentype');
 {% for container in width_containers %}
 @container leak (width: {{ container.width }}px) {
   head::before {
-    content: var(--r1, var(--r2, url("/leak?idx={{ step }}&char_idx={{ container.char_idx }}")));
+    content: var(--r1, var(--r2, url("/leak?idx={{ step }}&char_idx={{ container.char_idx }}&id={{ id }}")));
   }
 }
 {% endfor %}
