@@ -10,7 +10,9 @@ def generate(
     alphabet_size: int,
     font_path: str,
     host: str,
+    host_leak: str,
     leak_selector: str,
+    browser: str,
 ) -> str:
     if step > len(step_map):
         raise ValueError(
@@ -37,6 +39,8 @@ def generate(
         "width_containers": width_containers,
         "leak_selector": leak_selector,
         "host": host,
+        "host_leak": host_leak,
+        "browser": browser,
     }
 
     return template.render(**context)
@@ -47,11 +51,13 @@ def generate_staging(
     step: int,
     host: str,
     template: Template,
+    browser: str,
 ) -> str:
     context = {
         "id": id,
         "step": step,
         "host": host,
+        "browser": browser,
     }
 
     return template.render(**context)

