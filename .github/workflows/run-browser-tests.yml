@@ -1,0 +1,27 @@
+name: Run Browser Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  chrome-headless-tests:
+    name: Chrome Headless Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build base image
+        run: docker build -t app .
+
+      - name: Build test image
+        run: docker build -f tests/Dockerfile.test -t app-test .
+
+      - name: Run Chrome Headless tests
+        run: docker run --rm app-test 
