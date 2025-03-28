@@ -12,3 +12,8 @@ dependencies = [
 authors = [
     {name = "Dragos Albastroiu", email = "adragos@protonmail.com"}
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.11.2",
+]
