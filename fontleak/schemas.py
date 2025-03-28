@@ -47,12 +47,19 @@ class BaseLeakSetupParams(BaseModel):
         default=os.getenv("PARENT", "body"), description="Parent element (body or head)"
     )
     alphabet: str = Field(
-        default=os.getenv("ALPHABET", string.printable),
+        default=os.getenv(
+            "ALPHABET",
+            "".join(c for c in string.printable if c == " " or not c.isspace()),
+        ),
         description="Characters to include in the font",
     )
     attr: str = Field(
         default=os.getenv("ATTR", "textContent"), description="Attribute to exfiltrate"
     )
+    strip: bool = Field(
+        default=True, description="Strip unknown characters from the alphabet"
+    )
+    timeout: int = Field(default=10, description="Timeout for @import url()")
 
     @field_validator("parent")
     def validate_parent(cls, v):
@@ -62,6 +69,17 @@ class BaseLeakSetupParams(BaseModel):
 
     @field_validator("alphabet")
     def validate_alphabet(cls, v):
+        # Define the main alphabet
+        main_alphabet = "".join(
+            c for c in string.printable if c == " " or not c.isspace()
+        )
+
+        # Check if all characters are in the main alphabet
+        if not all(c in main_alphabet for c in v):
+            raise ValueError(
+                "All characters must be in the main alphabet (string.printable minus whitespace except space)"
+            )
+
         if not all(ord(c) < 256 for c in v):
             raise ValueError("fontleak only supports ASCII characters for now")
 
@@ -82,6 +100,7 @@ class DynamicLeakSetupParams(BaseLeakSetupParams):
         default=None, description="Unique identifier for the payload"
     )
     step: Optional[int] = Field(default=None, description="Step number")
+    staging: bool = Field(default=True, description="Staging mode")
 
 
 class StaticLeakSetupParams(BaseLeakSetupParams):
@@ -123,4 +142,8 @@ class DynamicLeakState(BaseModel):
     font_path: str = Field(default="TODO", description="Font path")
     setup: BaseLeakSetupParams = Field(
         description="Setup parameters for the dynamic leak"
+    )
+    browser: str = Field(
+        default="all",
+        description="Browser compatibility (all, chrome, firefox, safari)",
     )

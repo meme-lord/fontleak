@@ -18,10 +18,10 @@ def generate(
         )
 
     # Simplified HTML width - just needs to fit the alphabet
-    html_width = alphabet_size + 1
+    html_width = alphabet_size + 2
 
     width_containers = []
-    for width in range(1, alphabet_size + 1):
+    for width in range(1, alphabet_size + 2):
         char_idx = html_width - width - 1
         width_containers.append({"width": width, "char_idx": char_idx, "host": host})
 
@@ -32,9 +32,25 @@ def generate(
         "id": id,
         "step": step,
         "step_char": step_char,
+        "html_width": html_width,
         "font_path": font_path,
         "width_containers": width_containers,
         "leak_selector": leak_selector,
+        "host": host,
+    }
+
+    return template.render(**context)
+
+
+def generate_staging(
+    id: str,
+    step: int,
+    host: str,
+    template: Template,
+) -> str:
+    context = {
+        "id": id,
+        "step": step,
         "host": host,
     }
 

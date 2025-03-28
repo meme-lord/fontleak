@@ -1,6 +1,9 @@
 import string
 from typing import List, Dict, Tuple
 import unicodedata
+import tempfile
+import base64
+import subprocess
 
 # Constants
 IDX_POINTS = []
@@ -38,12 +41,6 @@ for code_point in range(256, 0x1FFFF):
         and not "THAI" in desc
     ):
         IDX_POINTS.append(code_point)
-
-IDX_MAX = len(IDX_POINTS)
-
-print("IDX_MAX: ", IDX_MAX)
-
-open("idx_points.txt", "w").write("[" + ",".join(map(hex, IDX_POINTS)) + "]")
 
 
 def create_svg_template():
@@ -95,7 +92,7 @@ def generate_initial_glyphs(alphabet):
     return glyphs, unknown_glyphs, char_glyphs
 
 
-def generate_custom_glyphs(alphabet):
+def generate_custom_glyphs(alphabet, idx_max):
     """Generate leak and index glyphs in the Private Use Area."""
     glyphs = []
     leak_glyphs = []
@@ -134,7 +131,7 @@ def generate_custom_glyphs(alphabet):
         path_data = "M1 0z"
         glyphs.append(create_glyph(glyph_name, i, 0, path_data))
 
-    for i in range(IDX_MAX):
+    for i in range(idx_max):
         glyph_name = "i{}".format(i)
         horiz_adv_x = 0
         # horiz_adv_x = i # index_width
@@ -175,6 +172,7 @@ def generate_feature_file(
     index_glyphs,
     idx_max,
     output_file="mylig.fea",
+    strip=True,
 ):
     """Generate OpenType feature file for ligature substitutions."""
     # Define the character classes
@@ -184,7 +182,10 @@ def generate_feature_file(
     ]
 
     # Generate lookup tables
-    lookups = ["sub u0 by NULL; sub @any by @any;"]
+    if strip:
+        lookups = ["sub u0 by NULL; sub @any by @any;"]
+    else:
+        lookups = []
 
     # Lookup: Handle other characters
     # idxn any -> idxn-1 (for n > 0)
@@ -236,6 +237,7 @@ def generate_font(
     output_feature="mylig.fea",
     alphabet="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_",
     idx_max=2400,
+    strip=True,
 ):
     """Main function to generate the font and feature file."""
     # Check if we can fit all glyphs in the Private Use Area
@@ -247,7 +249,7 @@ def generate_font(
     # Generate all glyphs
     glyphs = []
     initial_glyphs, unknown_glyphs, char_glyphs = generate_initial_glyphs(alphabet)
-    custom_glyphs, leak_glyphs, index_glyphs = generate_custom_glyphs(alphabet)
+    custom_glyphs, leak_glyphs, index_glyphs = generate_custom_glyphs(alphabet, idx_max)
 
     glyphs.extend(initial_glyphs)
     glyphs.extend(custom_glyphs)
@@ -262,9 +264,39 @@ def generate_font(
         char_glyphs=char_glyphs,
         leak_glyphs=leak_glyphs,
         index_glyphs=index_glyphs,
-        idx_max=min(idx_max, IDX_MAX),
+        idx_max=min(idx_max, len(IDX_POINTS)),
         output_file=output_feature,
+        strip=strip,
     )
+
+
+def generate(
+    alphabet: str, idx_max: int = 128, strip: bool = True, prefix: str = ""
+) -> Tuple[str, list[int]]:
+    """Returns data:base64 of the generated font"""
+    # generate temporary file to save the font and .fea
+    with tempfile.NamedTemporaryFile() as font_file:
+        base_path = font_file.name
+        svg_path = base_path + ".svg"
+        fea_path = base_path + ".fea"
+        ttf_path = base_path + ".ttf"
+        otf_path = base_path + ".otf"
+
+        generate_font(svg_path, fea_path, alphabet, idx_max, strip)
+
+        # Convert SVG to TTF
+        subprocess.run(["svg2ttf", svg_path, ttf_path], check=True)
+
+        # Apply features to create OTF
+        subprocess.run(
+            ["uv", "run", "fonttools", "feaLib", "-o", otf_path, fea_path, ttf_path],
+            check=True,
+        )
+
+        with open(otf_path, "rb") as otf_file:
+            return "data:font/opentype;base64," + base64.b64encode(
+                otf_file.read()
+            ).decode("utf-8"), IDX_POINTS[:idx_max]
 
 
 if __name__ == "__main__":
