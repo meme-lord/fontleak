@@ -15,6 +15,10 @@ class Settings(BaseModel):
         ...,
         description="Base URL where the leak is accessible (e.g., http://127.0.0.1:4242). This is for images to not throttle the connection limit.",
     )
+    fastapi_logging: bool = Field(
+        default=os.getenv("FASTAPI_LOGGING", "true").lower() == "true",
+        description="Enable or disable FastAPI logging",
+    )
 
     @field_validator("host", "host_leak")
     def validate_host(cls, v):
@@ -63,7 +67,9 @@ class BaseLeakSetupParams(BaseModel):
     strip: bool = Field(
         default=True, description="Strip unknown characters from the alphabet"
     )
-    timeout: int = Field(default=10, description="Timeout for @import url()")
+    timeout: int = Field(
+        default=int(os.getenv("TIMEOUT", 10)), description="Timeout for @import url()"
+    )
 
     @field_validator("parent")
     def validate_parent(cls, v):

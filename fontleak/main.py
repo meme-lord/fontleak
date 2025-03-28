@@ -14,6 +14,7 @@ from .fontgen import dynamic as dynamic_font
 import asyncio
 from user_agents import parse
 from typing import Literal
+import os
 
 # Add in-memory storage for leak states and events
 leak_states: dict[str, DynamicLeakState] = {}
@@ -24,6 +25,13 @@ app = FastAPI(
     version="0.1.0",
     description="Fontleak server: Fast exfiltration of text using CSS and Ligatures",
 )
+
+# Disable FastAPI logging if environment variable is set
+if not settings.fastapi_logging:
+    import logging
+    logging.getLogger("uvicorn.access").disabled = True
+    logging.getLogger("uvicorn.error").disabled = True
+    logging.getLogger("uvicorn").disabled = True
 
 # Setup templates
 templates = Jinja2Templates(directory="templates")
