@@ -4,6 +4,7 @@ import tempfile
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import os
+import uuid
 
 
 def test_secret_leak():
@@ -28,13 +29,21 @@ def test_secret_leak():
     temp_dir = None
 
     try:
-        # Create a temporary directory for Chrome user data
-        temp_dir = tempfile.mkdtemp()
+        # Create a unique temporary directory for Chrome user data
+        unique_id = str(uuid.uuid4())
+        temp_dir = tempfile.mkdtemp(prefix=f"chrome_data_{unique_id}_")
+        print(f"Created temporary directory: {temp_dir}")
         
-        # Set up Chrome with unique user data directory
+        # Set up Chrome with more specific options
         chrome_options = Options()
-        chrome_options.add_argument(os.environ["CHROME_OPTIONS"])
+        for option in os.environ["CHROME_OPTIONS"].split():
+            chrome_options.add_argument(option)
         chrome_options.add_argument(f"--user-data-dir={temp_dir}")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--no-sandbox")
+        
+        # Add more debug info
+        print(f"Launching Chrome with options: {chrome_options.arguments}")
         driver = webdriver.Chrome(options=chrome_options)
 
         # Visit the page

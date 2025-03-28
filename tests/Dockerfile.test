@@ -10,11 +10,23 @@ RUN apt-get update && \
     apt-get install -y google-chrome-stable && \
     rm -rf /var/lib/apt/lists/*
 
+# Install ChromeDriver that matches Chrome version
+RUN CHROME_VERSION=$(google-chrome --version | grep -oP '(?<=Google Chrome )[^ ]+') && \
+    CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION") && \
+    wget -q "https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip" && \
+    unzip chromedriver_linux64.zip && \
+    mv chromedriver /usr/local/bin/chromedriver && \
+    chmod +x /usr/local/bin/chromedriver && \
+    rm chromedriver_linux64.zip
+
 # Install Python test dependencies and docker CLI
 RUN uv add selenium pytest
 
 # Copy test files
 COPY tests/ /app/tests/
+
+# Create directory for Chrome user data
+RUN mkdir -p /tmp/chrome_data && chmod 777 /tmp/chrome_data
 
 # Set up Chrome options
 ENV CHROME_OPTIONS="--headless --no-sandbox --disable-gpu --disable-dev-shm-usage --remote-debugging-port=9222"
