@@ -11,10 +11,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python test dependencies and docker CLI
-RUN uv add selenium pytest && \
-    apt-get update && \
-    apt-get install -y docker.io && \
-    rm -rf /var/lib/apt/lists/*
+RUN uv add selenium pytest
 
 # Copy test files
 COPY tests/ /app/tests/

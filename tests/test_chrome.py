@@ -1,5 +1,6 @@
 import time
 import subprocess
+import tempfile
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import os
@@ -22,11 +23,18 @@ def test_secret_leak():
         stderr=subprocess.PIPE,
         text=True,
     )
+    
+    driver = None
+    temp_dir = None
 
     try:
-        # Set up Chrome
+        # Create a temporary directory for Chrome user data
+        temp_dir = tempfile.mkdtemp()
+        
+        # Set up Chrome with unique user data directory
         chrome_options = Options()
         chrome_options.add_argument(os.environ["CHROME_OPTIONS"])
+        chrome_options.add_argument(f"--user-data-dir={temp_dir}")
         driver = webdriver.Chrome(options=chrome_options)
 
         # Visit the page
@@ -41,6 +49,12 @@ def test_secret_leak():
 
     finally:
         # Clean up
-        driver.quit()
+        if driver:
+            driver.quit()
+        if temp_dir:
+            try:
+                os.rmdir(temp_dir)
+            except OSError:
+                pass
         server_process.terminate()
         server_process.wait()
