@@ -32,11 +32,11 @@ templates = Jinja2Templates(directory="templates")
 def get_browser(request: Request) -> Literal["chrome", "safari", "firefox", "all"]:
     user_agent = parse(request.headers.get("user-agent", ""))
 
-    if user_agent.browser.family == "Chrome":
+    if "chrome" in user_agent.browser.family.lower():
         browser = "chrome"
-    elif user_agent.browser.family == "Safari":
+    elif "safari" in user_agent.browser.family.lower():
         browser = "safari"
-    elif user_agent.browser.family == "Firefox":
+    elif "firefox" in user_agent.browser.family.lower():
         browser = "firefox"
     else:
         browser = "all"

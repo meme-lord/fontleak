@@ -65,7 +65,7 @@ def test_secret_leak():
         # Visit the page
         print("Loading test page...")
         driver.get("http://127.0.0.1:4242/test")
-        time.sleep(10)
+        time.sleep(15)
 
         # Check server output
         server_process.terminate()
