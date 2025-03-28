@@ -75,7 +75,10 @@ class BaseLeakParams(BaseModel):
         return v
 
 class LeakParams(BaseLeakParams):
-    pass
+    id: str = Field(
+        default="",
+        description="Unique identifier for the payload"
+    )
 
 class StaticParams(BaseLeakParams):
     length: int = Field(
