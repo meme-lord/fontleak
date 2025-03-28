@@ -81,6 +81,7 @@ class DynamicLeakSetupParams(BaseLeakSetupParams):
     id: Optional[str] = Field(
         default=None, description="Unique identifier for the payload"
     )
+    step: Optional[int] = Field(default=None, description="Step number")
 
 
 class StaticLeakSetupParams(BaseLeakSetupParams):
@@ -100,12 +101,26 @@ class StaticLeakSetupParams(BaseLeakSetupParams):
 
 
 class LeakParams(BaseModel):
-    idx: Optional[int] = Field(
-        default=None, description="Index of the character to leak in the reconstruction"
-    )
-    char_idx: int = Field(
+    idx: int = Field(
         default=0, description="Index of the character to leak in the alphabet"
     )
-    id: Optional[str] = Field(
-        default=None, description="Unique identifier for the payload"
+
+
+class DynamicLeakParams(LeakParams):
+    step: int = Field(description="Step number")
+    id: str = Field(description="Unique identifier for the dynamic leak state")
+
+
+class StaticLeakParams(LeakParams):
+    pass
+
+
+class DynamicLeakState(BaseModel):
+    id: str = Field(description="Unique identifier for the dynamic leak state")
+    reconstruction: str = Field(default="", description="Reconstructed leaked text")
+    step: int = Field(default=0, description="Step number")
+    step_map: list[int] = Field(default=[0x100], description="Step map for the font")
+    font_path: str = Field(default="TODO", description="Font path")
+    setup: BaseLeakSetupParams = Field(
+        description="Setup parameters for the dynamic leak"
     )

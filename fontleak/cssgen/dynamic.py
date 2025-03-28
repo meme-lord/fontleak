@@ -12,7 +12,6 @@ def generate(
     host: str,
     leak_selector: str,
 ) -> str:
-
     if step > len(step_map):
         raise ValueError(
             f"Step {step} is greater than the number of steps in the step map."
