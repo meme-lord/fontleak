@@ -73,13 +73,17 @@ def generate_sfc(
     host_leak: str,
     leak_selector: str,
     browser: str,
+    length: int,
 ) -> str:
-    html_width = alphabet_size + 2
+    html_width = length * (alphabet_size + 1) + 1
 
     width_containers = []
-    for width in range(1, alphabet_size + 2):
-        char_idx = html_width - width - 1
-        width_containers.append({"width": width, "char_idx": char_idx, "host": host})
+    for width in range(1, html_width):
+        char_idx = (html_width - width - 1) % (alphabet_size + 1)
+        step = (html_width - width - 1) // (alphabet_size + 1)
+        width_containers.append(
+            {"width": width, "char_idx": char_idx, "host": host, "step": step}
+        )
 
     context = {
         "id": id,

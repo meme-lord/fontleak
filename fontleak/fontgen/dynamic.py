@@ -48,7 +48,7 @@ def create_svg_template():
     return """<svg>
   <defs>
     <font id="fontleak" horiz-adv-x="0">
-      <font-face font-family="fontlheak" units-per-em="1000" ascent="5" descent="5" />
+      <font-face font-family="fontleak" units-per-em="1000" ascent="5" descent="5" />
       <missing-glyph />
       $GLYPHS$
     </font>
@@ -93,7 +93,7 @@ def generate_initial_glyphs(alphabet):
     return glyphs, unknown_glyphs, char_glyphs
 
 
-def generate_custom_glyphs(alphabet, idx_max):
+def generate_custom_glyphs(alphabet, idx_max, offset):
     """Generate leak and index glyphs in the Private Use Area."""
     glyphs = []
     leak_glyphs = []
@@ -108,7 +108,7 @@ def generate_custom_glyphs(alphabet, idx_max):
     # 1. Add regular leak glyphs with increasing widths
     for i in range(alphabet_len):
         glyph_name = "l{}".format(i)
-        horiz_adv_x = i + 1  # Start from width 1
+        horiz_adv_x = offset + i + 1  # Start from width 1
         path_data = "M{} 0z".format(128 + i)
 
         glyphs.append(
@@ -187,13 +187,26 @@ def generate_feature_file(
     # Generate lookup tables
     lookups = []
 
+    if strip:
+        lookups.extend(
+            generate_lookup(
+                "strip1",
+                ["sub u0 by NULL"],
+            )
+        )
+
     if prefix:
         lookups.extend(
             generate_lookup(
                 "prefix",
                 [
                     "sub "
-                    + " ".join(["c{}".format(i) for i in prefix])
+                    + " ".join(
+                        [
+                            "c{}".format(i) if i < len(char_glyphs) else "u0"
+                            for i in prefix
+                        ]
+                    )
                     + " by "
                     + ("i0" if prefix_idx else "u0")
                 ],
@@ -203,7 +216,7 @@ def generate_feature_file(
     if strip:
         lookups.extend(
             generate_lookup(
-                "strip",
+                "strip2",
                 ["sub u0 by NULL"],
             )
         )
@@ -256,14 +269,15 @@ def generate_feature_file(
 
 
 def generate_font(
-    output_font="myfont.svg",
-    output_feature="mylig.fea",
-    alphabet="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_",
-    idx_max=2400,
-    strip=True,
-    prefix=[],
-    prefix_idx=False,
-):
+    output_font: str = "myfont.svg",
+    output_feature: str = "mylig.fea",
+    alphabet: str = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_",
+    idx_max: int = 2400,
+    strip: bool = True,
+    prefix: list = [],
+    prefix_idx: bool = False,
+    offset: int = 0,
+) -> None:
     """Main function to generate the font and feature file."""
     # Check if we can fit all glyphs in the Private Use Area
     total_glyphs_needed = len(alphabet) * 2 + idx_max + 2  # leak glyphs + index glyphs
@@ -274,7 +288,9 @@ def generate_font(
     # Generate all glyphs
     glyphs = []
     initial_glyphs, unknown_glyphs, char_glyphs = generate_initial_glyphs(alphabet)
-    custom_glyphs, leak_glyphs, index_glyphs = generate_custom_glyphs(alphabet, idx_max)
+    custom_glyphs, leak_glyphs, index_glyphs = generate_custom_glyphs(
+        alphabet, idx_max, offset
+    )
 
     glyphs.extend(initial_glyphs)
     glyphs.extend(custom_glyphs)
@@ -304,6 +320,7 @@ def generate(
     strip: bool = True,
     prefix: str = "",
     prefix_idx: bool = False,
+    offset: int = 0,
 ) -> Tuple[str, list[int]]:
     """Returns data:base64 of the generated font"""
     # generate temporary file to save the font and .fea
@@ -314,9 +331,11 @@ def generate(
         ttf_path = base_path + ".ttf"
         otf_path = base_path + ".otf"
 
-        prefix = [alphabet.index(c) for c in prefix]
+        prefix = [alphabet.index(c) if c in alphabet else len(alphabet) for c in prefix]
 
-        generate_font(svg_path, fea_path, alphabet, idx_max, strip, prefix, prefix_idx)
+        generate_font(
+            svg_path, fea_path, alphabet, idx_max, strip, prefix, prefix_idx, offset
+        )
 
         # Convert SVG to TTF
         subprocess.run(["svg2ttf", svg_path, ttf_path], check=True)

