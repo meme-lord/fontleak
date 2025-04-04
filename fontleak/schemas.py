@@ -119,7 +119,7 @@ class DynamicLeakSetupParams(BaseLeakSetupParams):
 
 class StaticLeakSetupParams(BaseLeakSetupParams):
     length: int = Field(
-        default=int(os.getenv("LENGTH", 100)), description="Length of the payload"
+        default=int(os.getenv("LENGTH", 64)), description="Length of the payload"
     )
     browser: str = Field(
         default=os.getenv("BROWSER", "all"),

@@ -34,10 +34,14 @@ Set the `BASE_URL` environment variable to the public URL where the site will be
 The fontleak URL accepts several parameters to customize its behavior:
 
 #### Parameters
-- `selector`: CSS selector that matches exactly one element in the target page. default: env `SELECTOR` / `script:first-of-type`
-- `attr`: Attribute to exfiltrate. default: env `ATTR` / `textContent`
-- `parent`: Parent element of the target element (options: `body` or `head`). default: env `PARENT` / `body`
-- `alphabet`: Characters to include in the font (default: env `ALPHABET` / `contents of string.printable`).
+- `selector`: CSS selector that matches exactly one element in the target page. Default: `SELECTOR` env var or `script:first-of-type`
+- `attr`: Attribute to exfiltrate. Default: `ATTR` env var or `textContent`
+- `parent`: Parent element of the target element (options: `body` or `head`). Default: `PARENT` env var or `body`
+- `alphabet`: Characters to include in the font. Default: `ALPHABET` env var or `string.printable` minus whitespace (except space)
+- `timeout`: Timeout for @import url(). Default: `TIMEOUT` env var or `10` seconds
+- `strip`: Strip unknown characters from the leak. Default: `true`
+- `length`: Length of the leak. Default: `64`
+- `prefix`: Prefix to remove (or to start counter from for Safari) for the dynamic leak. Default: empty string
 
 #### Example Usage
 
@@ -53,6 +57,21 @@ Custom selector, parent, and alphabet:
 
 > **⚠️ Warning:** The CSS selector must match exactly one element in the target page. If the selector matches multiple elements or no elements, fontleak will fail to exfiltrate the text.
 
+## Environment Variables
+
+You can configure fontleak using these environment variables:
+
+- `BASE_URL`: Base URL where the application is accessible (e.g., http://localhost:4242)
+- `BASE_LEAK_URL`: Base URL where the leak is accessible for images. Default: same as BASE_URL
+- `FASTAPI_LOGGING`: Enable or disable FastAPI logging. Default: "true"
+- `SELECTOR`: CSS selector for target element. Default: "script:first-of-type"
+- `PARENT`: Parent element (body or head). Default: "body"
+- `ALPHABET`: Characters to include in the font. Default: string.printable minus whitespace
+- `ATTR`: Attribute to exfiltrate. Default: "textContent"
+- `TIMEOUT`: Timeout for @import url(). Default: 10
+- `LENGTH`: Length of the payload for static leaks. Default: 100
+- `BROWSER`: Browser compatibility (all, chrome, firefox, safari). Default: "all"
+
 ## Static payload
 
 By default, fontleak will use [sequential import chaining](https://d0nut.medium.com/better-exfiltration-via-html-injection-31c72a2dae8b) to efficiently exfiltrate text. But it's not always the case that the target page CSP allows this. 
@@ -64,8 +83,8 @@ wget http://localhost:4242/static -O payload.css
 ```
 
 Which takes these additional parameters:
-- `length`: Length of the payload. default: env `LENGTH` / `100`
-- `browser`: Browser compatibility (options: `all`, `chrome`, `firefox`, `safari`). default: env `BROWSER` / `all`
+- `length`: Length of the payload. Default: `LENGTH` env var or `100`
+- `browser`: Browser compatibility (options: `all`, `chrome`, `firefox`, `safari`). Default: `BROWSER` env var or `all`
 
 > **⚠️ Warning:** Size of payload.css is directly proportional to the `length` and `alphabet` size. Choosing a target browser can enable certain optimizations.
 
