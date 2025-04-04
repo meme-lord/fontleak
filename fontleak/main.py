@@ -150,6 +150,18 @@ def leak(request: Request, params: DynamicLeakParams = Depends()):
         return Response(content=f.read(), media_type="image/png")
 
 
+@app.get("/font.ttf")
+def font(request: Request):
+    font_path, _ = dynamic_font.generate(DynamicLeakSetupParams.model_fields["alphabet"].default)
+    import base64
+    font_data = base64.b64decode(font_path.split("data:font/opentype;base64,")[-1])
+    return Response(
+        content=font_data, 
+        media_type="font/opentype",
+        headers={"Access-Control-Allow-Origin": "*"}
+    )
+
+
 @app.get("/test")
 def test(request: Request):
     logger.debug("Handling test request")
