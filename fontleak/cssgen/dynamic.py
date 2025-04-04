@@ -98,3 +98,46 @@ def generate_sfc(
     }
 
     return template.render(**context)
+
+
+def generate_anim(
+    id: str,
+    idx_max: int,
+    step_map: list[int],
+    template: Template,
+    font_path: str,
+    alphabet_size: int,
+    host: str,
+    host_leak: str,
+    leak_selector: str,
+    browser: str,
+) -> str:
+    if idx_max > len(step_map):
+        raise ValueError(
+            f"Idx max {idx_max} is greater than the number of steps in the step map."
+        )
+
+    # Simplified HTML width - just needs to fit the alphabet
+    html_width = alphabet_size + 2
+
+    width_containers = []
+    for width in range(1, alphabet_size + 2):
+        char_idx = html_width - width - 1
+        width_containers.append({"width": width, "char_idx": char_idx, "host": host})
+
+    step_chars = [f"\\{step_map[i]:x}" for i in range(len(step_map))]
+    # Render template with context
+    context = {
+        "id": id,
+        "idx_max": idx_max,
+        "step_chars": step_chars,
+        "html_width": html_width,
+        "font_path": font_path,
+        "width_containers": width_containers,
+        "leak_selector": leak_selector,
+        "host": host,
+        "host_leak": host_leak,
+        "browser": browser,
+    }
+
+    return template.render(**context)

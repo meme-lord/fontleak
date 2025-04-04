@@ -130,7 +130,20 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
         return Response(content=css, media_type="text/css")
 
     if state.browser == "firefox":
-        raise NotImplementedError("Firefox is not supported yet")
+        template = templates.get_template("dynamic-anim.css.jinja")
+        css = dynamic_css.generate_anim(
+            id=state.id,
+            idx_max=state.length,
+            step_map=state.step_map,
+            template=template,
+            font_path=state.font_path,
+            alphabet_size=len(state.setup.alphabet),
+            host=settings.host,
+            host_leak=settings.host_leak,
+            leak_selector=params.selector,
+            browser=state.browser,
+        )
+        return Response(content=css, media_type="text/css")
 
     # Safari / unknown browser
     if params.step is None:
@@ -234,6 +247,11 @@ def test(request: Request):
     if browser == "safari":
         return Response(
             content=templates.get_template("test-dynamic-safari.html.jinja").render(),
+            media_type="text/html",
+        )
+    if browser == "firefox":
+        return Response(
+            content=templates.get_template("test-dynamic-firefox.html.jinja").render(),
             media_type="text/html",
         )
 
