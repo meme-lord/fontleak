@@ -39,7 +39,9 @@ class Settings(BaseModel):
 
 
 try:
-    settings = Settings(host="http://localhost:4242", host_leak="http://127.0.0.1:4242")
+    host = os.getenv("BASE_URL", "http://localhost:4242")
+    host_leak = os.getenv("BASE_LEAK_URL", host)
+    settings = Settings(host=host, host_leak=host_leak)
     logger.info("Application settings loaded successfully. Host: %s", settings.host)
 except ValidationError as e:
     logger.critical("Failed to load application settings:\n%s", str(e))
