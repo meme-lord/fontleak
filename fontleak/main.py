@@ -172,11 +172,11 @@ def test(request: Request):
     browser = get_browser(request)
     if browser == "chrome":
         return Response(
-            content=templates.get_template("test_dynamic_chrome.html.jinja").render(),
+            content=templates.get_template("test-dynamic-chrome.html.jinja").render(),
             media_type="text/html",
         )
 
     return Response(
-        content=templates.get_template("test_dynamic_all.html.jinja").render(),
+        content=templates.get_template("test-dynamic-all.html.jinja").render(),
         media_type="text/html",
     )

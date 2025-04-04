@@ -81,7 +81,7 @@ def generate_initial_glyphs(alphabet):
         else:
             glyph_name = "u0"
             path_data = "M1 0z"
-            if False:  # not unknown_glyphs:
+            if not unknown_glyphs:
                 unknown_glyphs.append(glyph_name)
 
         glyphs.append(create_glyph(glyph_name, i, horiz, path_data))
@@ -174,6 +174,7 @@ def generate_feature_file(
     idx_max,
     output_file="mylig.fea",
     strip=True,
+    prefix=[],
 ):
     """Generate OpenType feature file for ligature substitutions."""
     # Define the character classes
@@ -183,10 +184,23 @@ def generate_feature_file(
     ]
 
     # Generate lookup tables
+    lookups = []
+
+    if prefix:
+        lookups.extend(
+            generate_lookup(
+                "prefix",
+                ["sub " + " ".join(["c{}".format(i) for i in prefix]) + " by u0"],
+            )
+        )
+
     if strip:
-        lookups = ["sub u0 by NULL; sub @any by @any;"]
-    else:
-        lookups = []
+        lookups.extend(
+            generate_lookup(
+                "strip",
+                ["sub u0 by NULL"],
+            )
+        )
 
     # Lookup: Handle other characters
     # idxn any -> idxn-1 (for n > 0)
@@ -218,6 +232,8 @@ def generate_feature_file(
     for char_glyph, leak_glyph in zip(char_glyphs, leak_glyphs):
         final_rules.append(f"sub i0 {char_glyph} by {leak_glyph}")
 
+    final_rules.append("sub i0 u0 by lu;")
+
     # Add final substitution lookup
     lookups.extend(generate_lookup("final_substitution", final_rules))
 
@@ -239,6 +255,7 @@ def generate_font(
     alphabet="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_",
     idx_max=2400,
     strip=True,
+    prefix=[],
 ):
     """Main function to generate the font and feature file."""
     # Check if we can fit all glyphs in the Private Use Area
@@ -268,6 +285,7 @@ def generate_font(
         idx_max=min(idx_max, len(IDX_POINTS)),
         output_file=output_feature,
         strip=strip,
+        prefix=prefix,
     )
 
 
@@ -284,7 +302,9 @@ def generate(
         ttf_path = base_path + ".ttf"
         otf_path = base_path + ".otf"
 
-        generate_font(svg_path, fea_path, alphabet, idx_max, strip)
+        prefix = [alphabet.index(c) for c in prefix]
+
+        generate_font(svg_path, fea_path, alphabet, idx_max, strip, prefix)
 
         # Convert SVG to TTF
         subprocess.run(["svg2ttf", svg_path, ttf_path], check=True)
