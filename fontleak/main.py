@@ -87,6 +87,7 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
                 step_map=step_map,
                 font_path=font_path,
                 browser=browser,
+                prefix=params.prefix or "",
             )
             params.id = new_id
 
@@ -139,7 +140,7 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
         DynamicLeakSetupParams.model_fields["alphabet"].default,
         idx_max=10,
         strip=True,
-        prefix="window" + state.reconstruction,
+        prefix=state.prefix + state.reconstruction,
         prefix_idx=True,
     )
     import base64
