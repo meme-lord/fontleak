@@ -114,6 +114,9 @@ class DynamicLeakSetupParams(BaseLeakSetupParams):
     step: Optional[int] = Field(default=None, description="Step number")
     staging: bool = Field(default=True, description="Staging mode")
     prefix: Optional[str] = Field(default="", description="Prefix for the dynamic leak")
+    strip: bool = Field(
+        default=True, description="Strip unknown characters from the leak"
+    )
 
 
 class StaticLeakSetupParams(BaseLeakSetupParams):
@@ -154,6 +157,9 @@ class DynamicLeakState(BaseModel):
     step_map: list[int] = Field(default=[0x100], description="Step map for the font")
     font_path: str = Field(default="TODO", description="Font path")
     prefix: str = Field(default="", description="Prefix for the dynamic leak")
+    strip: bool = Field(
+        default=True, description="Strip unknown characters from the leak"
+    )
     setup: BaseLeakSetupParams = Field(
         description="Setup parameters for the dynamic leak"
     )

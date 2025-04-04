@@ -77,7 +77,9 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
         # Create new state if id is not specified or not found
         if params.id is None or params.id not in leak_states:
             new_id = str(len(leak_states) + 1) if params.id is None else params.id
-            font_path, step_map = dynamic_font.generate(params.alphabet)
+            font_path, step_map = dynamic_font.generate(
+                params.alphabet, prefix=params.prefix or "", strip=params.strip
+            )
             browser = get_browser(request)
             leak_states[new_id] = DynamicLeakState(
                 id=new_id,
@@ -88,6 +90,7 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
                 font_path=font_path,
                 browser=browser,
                 prefix=params.prefix or "",
+                strip=params.strip,
             )
             params.id = new_id
 
