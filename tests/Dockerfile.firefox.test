@@ -1,0 +1,22 @@
+# Use the existing Dockerfile as base
+FROM app
+
+# Install Firefox
+RUN apt-get update && \
+    apt-get install -y wget curl gnupg firefox-esr && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Python test dependencies
+RUN uv add selenium pytest webdriver-manager
+
+# Copy test files
+COPY tests/ /app/tests/
+
+# Create directory for Firefox user data
+RUN mkdir -p /tmp/firefox_data && chmod 777 /tmp/firefox_data
+
+# Set up Firefox options
+ENV FIREFOX_OPTIONS="--headless"
+
+# Run both server and tests
+CMD ["uv", "run", "pytest", "tests/test_firefox.py", "-v"] 
