@@ -136,7 +136,7 @@ class LeakParams(BaseModel):
 
 
 class DynamicLeakParams(LeakParams):
-    step: int = Field(description="Step number")
+    step: Optional[int] = Field(default=None, description="Step number")
     id: str = Field(description="Unique identifier for the dynamic leak state")
 
 

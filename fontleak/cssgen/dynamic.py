@@ -61,3 +61,36 @@ def generate_staging(
     }
 
     return template.render(**context)
+
+
+def generate_sfc(
+    id: str,
+    step: int,
+    idx_max: int,
+    template: Template,
+    alphabet_size: int,
+    host: str,
+    host_leak: str,
+    leak_selector: str,
+    browser: str,
+) -> str:
+    html_width = alphabet_size + 2
+
+    width_containers = []
+    for width in range(1, alphabet_size + 2):
+        char_idx = html_width - width - 1
+        width_containers.append({"width": width, "char_idx": char_idx, "host": host})
+
+    context = {
+        "id": id,
+        "step": step,
+        "idx_max": idx_max,
+        "width_containers": width_containers,
+        "html_width": html_width,
+        "host": host,
+        "host_leak": host_leak,
+        "leak_selector": leak_selector,
+        "browser": browser,
+    }
+
+    return template.render(**context)

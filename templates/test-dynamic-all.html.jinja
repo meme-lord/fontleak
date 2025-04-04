@@ -1,11 +1,8 @@
-<body>
+<html>
     <head>
     </head>
     <body>
         <script>window.secret = 'The quick brown fox jumps over the lazy dog';</script>
-        {% set unique_id = range(1, 1000000) | random | string %}
-        {% for step in range(10) %}
-        <style>@import url("/?step={{ step }}&id={{ unique_id }}");</style>
-        {% endfor %}
+        <style>@import url("/");</style>
     </body>
-</body>
+</html>

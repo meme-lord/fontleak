@@ -175,6 +175,7 @@ def generate_feature_file(
     output_file="mylig.fea",
     strip=True,
     prefix=[],
+    prefix_idx=False,
 ):
     """Generate OpenType feature file for ligature substitutions."""
     # Define the character classes
@@ -190,7 +191,12 @@ def generate_feature_file(
         lookups.extend(
             generate_lookup(
                 "prefix",
-                ["sub " + " ".join(["c{}".format(i) for i in prefix]) + " by u0"],
+                [
+                    "sub "
+                    + " ".join(["c{}".format(i) for i in prefix])
+                    + " by "
+                    + ("i0" if prefix_idx else "u0")
+                ],
             )
         )
 
@@ -256,6 +262,7 @@ def generate_font(
     idx_max=2400,
     strip=True,
     prefix=[],
+    prefix_idx=False,
 ):
     """Main function to generate the font and feature file."""
     # Check if we can fit all glyphs in the Private Use Area
@@ -286,12 +293,17 @@ def generate_font(
         output_file=output_feature,
         strip=strip,
         prefix=prefix,
+        prefix_idx=prefix_idx,
     )
 
 
 @lru_cache(maxsize=None)
 def generate(
-    alphabet: str, idx_max: int = 128, strip: bool = True, prefix: str = ""
+    alphabet: str,
+    idx_max: int = 128,
+    strip: bool = True,
+    prefix: str = "",
+    prefix_idx: bool = False,
 ) -> Tuple[str, list[int]]:
     """Returns data:base64 of the generated font"""
     # generate temporary file to save the font and .fea
@@ -304,7 +316,7 @@ def generate(
 
         prefix = [alphabet.index(c) for c in prefix]
 
-        generate_font(svg_path, fea_path, alphabet, idx_max, strip, prefix)
+        generate_font(svg_path, fea_path, alphabet, idx_max, strip, prefix, prefix_idx)
 
         # Convert SVG to TTF
         subprocess.run(["svg2ttf", svg_path, ttf_path], check=True)

