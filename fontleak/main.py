@@ -94,7 +94,10 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
         if params.id is None or params.id not in leak_states:
             new_id = str(len(leak_states) + 1) if params.id is None else params.id
             font_path, step_map = dynamic_font.generate(
-                params.alphabet, prefix=params.prefix or "", strip=params.strip
+                params.alphabet,
+                idx_max=params.length,
+                prefix=params.prefix or "",
+                strip=params.strip,
             )
             browser = get_browser(request)
             if browser == "safari":
