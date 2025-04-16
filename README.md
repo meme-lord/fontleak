@@ -25,7 +25,7 @@ You can quickly get started with fontleak using Docker:
 
 ```bash
 # Run the container
-docker run -it --rm -p 4242:4242 -e BASE_URL=http://localhost:4242 adrgs/fontleak
+docker run -it --rm -p 4242:4242 -e BASE_URL=http://localhost:4242 ghcr.io/adrgs/fontleak:latest
 ```
 
 Set the `BASE_URL` environment variable to the public URL where the site will be accessible.
