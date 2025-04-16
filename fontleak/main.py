@@ -14,7 +14,6 @@ from .fontgen import dynamic as dynamic_font
 import asyncio
 from user_agents import parse
 from typing import Literal
-import os
 import base64
 
 # Add in-memory storage for leak states and events
@@ -189,35 +188,33 @@ def generate_static_payload(params: StaticLeakSetupParams = Depends()):
 def leak(request: Request, params: DynamicLeakParams = Depends()):
     logger.debug("Handling leak request with params: %s", params)
 
-    if isinstance(params, DynamicLeakParams):
-        if params.id in leak_states:
-            state = leak_states[params.id]
-            # Update reconstruction and step
-            if params.idx == len(state.setup.alphabet):
-                state.reconstruction += "🗅"
-            else:
-                state.reconstruction += state.setup.alphabet[params.idx]
+    if params.id in leak_states:
+        state = leak_states[params.id]
+        # Update reconstruction and step
+        if params.idx == len(state.setup.alphabet):
+            state.reconstruction += "🗅"
+        else:
+            state.reconstruction += state.setup.alphabet[params.idx]
 
-            state.step += 1
+        state.step += 1
 
-            logger.info("Leak update [%s]: %s", params.id, state.reconstruction)
+        logger.info("Leak update [%s]: %s", params.id, state.reconstruction)
 
-            # Notify waiting requests
-            if params.id in leak_events:
-                leak_events[params.id].set()
-                leak_events[params.id].clear()
+        # Notify waiting requests
+        if params.id in leak_events:
+            leak_events[params.id].set()
+            leak_events[params.id].clear()
 
-    with open("templates/empty.png", "rb") as f:
-        return Response(
-            content="",
-            media_type="image/png",
-            status_code=400,
-            headers={
-                "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
-                "Pragma": "no-cache",
-                "Expires": "0",
-            },
-        )
+    return Response(
+        content="",
+        media_type="image/png",
+        status_code=400,
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
 
 
 @app.get("/font.ttf")
@@ -225,7 +222,6 @@ def font(request: Request):
     font_path, _ = dynamic_font.generate(
         DynamicLeakSetupParams.model_fields["alphabet"].default
     )
-    import base64
 
     font_data = base64.b64decode(font_path.split("data:font/opentype;base64,")[-1])
     return Response(
