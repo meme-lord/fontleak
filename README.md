@@ -43,7 +43,7 @@ The fontleak URL accepts several parameters to customize its behavior:
 - `alphabet`: Characters to include in the font. Default: `ALPHABET` env var or `string.printable` minus whitespace (except space)
 - `timeout`: Timeout for @import url(). Default: `TIMEOUT` env var or `10` seconds
 - `strip`: Strip unknown characters from the leak. Default: `true`
-- `length`: Length of the leak. Default: `64`
+- `length`: Length of the leak. Default: `100`
 - `prefix`: Prefix to remove (or to start counter from for Safari) for the dynamic leak. Default: empty string
 
 #### Example Usage
