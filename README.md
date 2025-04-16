@@ -35,7 +35,6 @@ The fontleak URL accepts several parameters to customize its behavior:
 
 #### Parameters
 - `selector`: CSS selector that matches exactly one element in the target page. Default: `SELECTOR` env var or `script:first-of-type`
-- `attr`: Attribute to exfiltrate. Default: `ATTR` env var or `textContent`
 - `parent`: Parent element of the target element (options: `body` or `head`). Default: `PARENT` env var or `body`
 - `alphabet`: Characters to include in the font. Default: `ALPHABET` env var or `string.printable` minus whitespace (except space)
 - `timeout`: Timeout for @import url(). Default: `TIMEOUT` env var or `10` seconds
@@ -67,7 +66,6 @@ You can configure fontleak using these environment variables:
 - `SELECTOR`: CSS selector for target element. Default: "script:first-of-type"
 - `PARENT`: Parent element (body or head). Default: "body"
 - `ALPHABET`: Characters to include in the font. Default: string.printable minus whitespace
-- `ATTR`: Attribute to exfiltrate. Default: "textContent"
 - `TIMEOUT`: Timeout for @import url(). Default: 10
 - `LENGTH`: Length of the payload for static leaks. Default: 100
 - `BROWSER`: Browser compatibility (all, chrome, firefox, safari). Default: "all"

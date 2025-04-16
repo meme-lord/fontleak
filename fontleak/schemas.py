@@ -63,9 +63,6 @@ class BaseLeakSetupParams(BaseModel):
         ),
         description="Characters to include in the font",
     )
-    attr: str = Field(
-        default=os.getenv("ATTR", "textContent"), description="Attribute to exfiltrate"
-    )
     timeout: int = Field(
         default=int(os.getenv("TIMEOUT", 10)), description="Timeout for @import url()"
     )
