@@ -65,14 +65,12 @@ Custom selector, parent, and alphabet:
 You can configure fontleak using these environment variables:
 
 - `BASE_URL`: Base URL where the application is accessible (e.g., http://localhost:4242)
-- `BASE_LEAK_URL`: Base URL where the leak is accessible for images. Default: same as BASE_URL
 - `FASTAPI_LOGGING`: Enable or disable FastAPI logging. Default: "true"
 - `SELECTOR`: CSS selector for target element. Default: "script:first-of-type"
 - `PARENT`: Parent element (body or head). Default: "body"
 - `ALPHABET`: Characters to include in the font. Default: string.printable minus whitespace
 - `TIMEOUT`: Timeout for @import url(). Default: 10
 - `LENGTH`: Length of the payload for static leaks. Default: 100
-- `BROWSER`: Browser compatibility (all, chrome, firefox, safari). Default: "all"
 
 ## Static payload
 
@@ -86,7 +84,6 @@ wget http://localhost:4242/static -O payload.css
 
 Which takes these additional parameters:
 - `length`: Length of the payload. Default: `LENGTH` env var or `100`
-- `browser`: Browser compatibility (options: `all`, `chrome`, `firefox`, `safari`). Default: `BROWSER` env var or `all`
 
 Instead of unique ids, fontleak will group requests by (IP, User-Agent, Referer) pairs.
 
