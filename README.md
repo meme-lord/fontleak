@@ -84,6 +84,7 @@ wget http://localhost:4242/static -O payload.css
 
 Which takes these additional parameters:
 - `length`: Length of the payload. Default: `LENGTH` env var or `100`
+- `browser`: The browser to target. Only Chrome and Firefox are supported for now. Default: `chrome`
 
 Instead of unique ids, fontleak will group requests by (IP, User-Agent, Referer) pairs.
 
