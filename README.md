@@ -11,7 +11,11 @@
 
 # fontleak
 
-Fast exfiltration of text using CSS and Ligatures. For a detailed technical explanation, check out my [blog post](https://adragos.ro/fontleak).
+Fast exfiltration of text using CSS and Ligatures. Works on Chrome, Firefox and Safari and is allowed by default by DOMPurify.
+
+
+https://github.com/user-attachments/assets/b30ef845-3a98-471d-87d8-032cf113306f
+
 
 ## Getting Started
 
@@ -83,8 +87,6 @@ wget http://localhost:4242/static -O payload.css
 Which takes these additional parameters:
 - `length`: Length of the payload. Default: `LENGTH` env var or `100`
 - `browser`: Browser compatibility (options: `all`, `chrome`, `firefox`, `safari`). Default: `BROWSER` env var or `all`
-
-> **⚠️ Warning:** Size of payload.css is directly proportional to the `length` and `alphabet` size. Choosing a target browser can enable certain optimizations.
 
 Instead of unique ids, fontleak will group requests by (IP, User-Agent, Referer) pairs.
 
