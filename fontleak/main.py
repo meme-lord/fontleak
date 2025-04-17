@@ -88,7 +88,7 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
                     leak_events[params.id].wait(), timeout=state.setup.timeout
                 )
             except asyncio.TimeoutError:
-                return Response(content="", media_type="text/css")
+                return Response(content="", media_type="text/css", headers={"Access-Control-Allow-Origin": "*"},)
     else:
         # Create new state if id is not specified or not found
         if params.id is None or params.id not in leak_states:
