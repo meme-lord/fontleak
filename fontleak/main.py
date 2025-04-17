@@ -130,7 +130,11 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
                 template=template,
                 browser=state.browser,
             )
-            return Response(content=css, media_type="text/css")
+            return Response(
+                content=css,
+                media_type="text/css",
+                headers={"Access-Control-Allow-Origin": "*"},
+            )
 
         template = templates.get_template("dynamic.css.jinja")
         css = dynamic_css.generate(
@@ -145,7 +149,11 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
             leak_selector=params.selector,
             browser=state.browser,
         )
-        return Response(content=css, media_type="text/css")
+        return Response(
+            content=css,
+            media_type="text/css",
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
 
     if state.browser == "firefox":
         template = templates.get_template("dynamic-anim.css.jinja")
@@ -161,7 +169,11 @@ async def index(request: Request, params: DynamicLeakSetupParams = Depends()):
             leak_selector=params.selector,
             browser=state.browser,
         )
-        return Response(content=css, media_type="text/css")
+        return Response(
+            content=css,
+            media_type="text/css",
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
 
     # Safari / unknown browser
     if params.step is None:
@@ -242,7 +254,11 @@ def generate_static_payload(
         browser=browser,
     )
 
-    return Response(content=css, media_type="text/css")
+    return Response(
+        content=css,
+        media_type="text/css",
+        headers={"Access-Control-Allow-Origin": "*"},
+    )
 
 
 @app.get("/leak")
@@ -308,6 +324,7 @@ def leak(request: Request, params: LeakParams = Depends()):
             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
             "Pragma": "no-cache",
             "Expires": "0",
+            "Access-Control-Allow-Origin": "*",
         },
     )
 
@@ -334,21 +351,25 @@ def test(request: Request):
         return Response(
             content=templates.get_template("test-dynamic-chrome.html.jinja").render(),
             media_type="text/html",
+            headers={"Access-Control-Allow-Origin": "*"},
         )
     if browser == "safari":
         return Response(
             content=templates.get_template("test-dynamic-safari.html.jinja").render(),
             media_type="text/html",
+            headers={"Access-Control-Allow-Origin": "*"},
         )
     if browser == "firefox":
         return Response(
             content=templates.get_template("test-dynamic-firefox.html.jinja").render(),
             media_type="text/html",
+            headers={"Access-Control-Allow-Origin": "*"},
         )
 
     return Response(
         content=templates.get_template("test-dynamic-all.html.jinja").render(),
         media_type="text/html",
+        headers={"Access-Control-Allow-Origin": "*"},
     )
 
 
@@ -361,19 +382,23 @@ def test_static(request: Request):
         return Response(
             content=templates.get_template("test-static-chrome.html.jinja").render(),
             media_type="text/html",
+            headers={"Access-Control-Allow-Origin": "*"},
         )
     if browser == "safari":
         return Response(
             content=templates.get_template("test-static-safari.html.jinja").render(),
             media_type="text/html",
+            headers={"Access-Control-Allow-Origin": "*"},
         )
     if browser == "firefox":
         return Response(
             content=templates.get_template("test-static-firefox.html.jinja").render(),
             media_type="text/html",
+            headers={"Access-Control-Allow-Origin": "*"},
         )
 
     return Response(
         content=templates.get_template("test-static-all.html.jinja").render(),
         media_type="text/html",
+        headers={"Access-Control-Allow-Origin": "*"},
     )
