@@ -1,9 +1,9 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/adrgs/fontleak)](https://github.com/adrgs/fontleak/releases)
 [![GitHub stars](https://img.shields.io/github/stars/adrgs/fontleak)](https://github.com/adrgs/fontleak/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/adrgs/fontleak)](https://github.com/adrgs/fontleak/network/members)
-[![GitHub contributors](https://img.shields.io/github/contributors/adrgs/fontleak)](https://github.com/adrgs/fontleak/graphs/contributors)
 [![Follow @adragos_](https://img.shields.io/twitter/follow/adragos_?style=social)](https://twitter.com/adragos_)
+[![Chrome Headless Test](https://img.shields.io/github/actions/workflow/status/adrgs/fontleak/run-browser-tests.yml?branch=main&label=Chrome%20Headless%20Test)](https://github.com/adrgs/fontleak/actions/workflows/run-browser-tests.yml)
+[![Firefox Headless Test](https://img.shields.io/github/actions/workflow/status/adrgs/fontleak/run-browser-tests.yml?branch=main&label=Firefox%20Headless%20Test)](https://github.com/adrgs/fontleak/actions/workflows/run-browser-tests.yml)
 
 <p align="center">
   <img width="400" alt="fontleak logo" src="https://github.com/user-attachments/assets/69d9b715-e9fc-4bc6-8e0c-b4126f44434e" />
@@ -87,6 +87,25 @@ Which takes these additional parameters:
 - `browser`: The browser to target. Only Chrome and Firefox are supported for now. Default: `chrome`
 
 Instead of unique ids, fontleak will group requests by (IP, User-Agent, Referer) pairs.
+
+## Development
+
+To set up a development environment:
+
+```bash
+# Clone the repository
+git clone https://github.com/adrgs/fontleak.git
+cd fontleak
+
+# Install dependencies using uv
+uv sync
+
+# Install svg2ttf globally for font generation
+npm install -g svg2ttf
+
+# Run fontleak
+uv run uvicorn fontleak.main:app --host 0.0.0.0 --port 4242
+```
 
 ## Disclaimer
 
