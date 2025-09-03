@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   chrome-headless-tests:
@@ -43,4 +44,4 @@ jobs:
         run: docker build -f tests/Dockerfile.firefox.test -t app-firefox-test .
 
       - name: Run Firefox Headless tests
-        run: docker run --rm app-firefox-test 
+        run: docker run --rm app-firefox-test
