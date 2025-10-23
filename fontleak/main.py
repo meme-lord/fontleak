@@ -256,6 +256,7 @@ def generate_static_payload(
     )
 
     css = css.replace('\\', '\\\\')
+    css = css.replace('&gt;', '>')
 
     return Response(
         content=css,
